@@ -9,14 +9,74 @@
 #include <thread>
 
 #include "SecondaryFunction.h"
-/*
+
 class LogMessage
 {
+private:
+    LogMessage* nextHandler = nullptr;
+    std::vector<std::unique_ptr<LogMessage>> handler_v;
+    std::string message_;
 public:
-    //Type type() const;
+    //Type type() const;    // это что вообще?
+    LogMessage(std::unique_ptr<LogMessage> handler, const std::string& message);
     const std::string& message() const;
+
+    virtual void logMessage() = 0;
 };
+
+/*
+    Каждый обработчик умеет:
+    - обрабатывать сообщение только определённого типа,
+    - передавать сообщение следующему обработчику.
 */
+/*
+    Обработчик предупреждения должен напечатать сообщение в консоль.
+*/
+class Warning : public LogMessage
+{
+public:
+    Warning(const std::string& message);
+    void logMessage() override;
+};
+
+/*
+    Обработчик обычной ошибки должен записать её в файл по указанному пути.
+*/
+class Error : public LogMessage
+{
+    std::string filePath_;
+public:
+    Error(const std::string& filePath);
+    void logMessage() override;
+};
+
+/*
+    Обработчик фатальной ошибки должен выбросить исключение с текстом сообщения,
+    потому что предполагается, что программа должна прекратить выполнение
+    после возникновения фатальной ошибки.
+*/
+class FatalError : public LogMessage
+{
+public:
+    FatalError();
+    void logMessage() override;
+};
+
+/*
+    Обработчик неизвестного сообщения должен выбросить исключение с текстом
+	о необработанном сообщении.
+*/
+class UnknowError : public LogMessage
+{
+public:
+    UnknowError();
+    void logMessage() override;
+};
+
+/////////////////
+
+
+
 
 class View // Базовый класс окошка, которое видит пользователь
 {

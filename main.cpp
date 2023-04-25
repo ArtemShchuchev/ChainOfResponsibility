@@ -46,7 +46,12 @@ int main(int argc, char** argv)
 {
 	printHeader(L"Задание 3. Паттерн «Цепочка ответственности»");
 
-	
+	auto root = std::make_unique<View>(0, 0, 256, 256); // Создаём основное окошко
+	auto button = std::make_unique<Button>(50, 50, 25, 25); // Создаём кнопку
+	auto* foregroundView = button.get(); // Окошко перед пользователем
+	root->addSubview(std::move(button)); // Встраиваем кнопку в основное окошко
+	foregroundView->handleClick(56, 70); // Кликаем в кнопку
+	foregroundView->handleClick(160, 130); // Кликаем мимо кнопки
 	
 	std::wcout << "\n";
 	return 0;

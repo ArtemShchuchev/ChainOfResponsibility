@@ -1,9 +1,13 @@
 ﻿#include "ChainOfResponsibility.h"
 
-LogMessage::LogMessage(std::unique_ptr<LogMessage> handler, const std::string& message) : message_(message)
+LogMessage::LogMessage(ErrType errType, const std::string& message)
+	: errType_(errType), message_(message)
 {
-	handler->nextHandler = this;
-	handler_v.push_back(std::move(handler));
+}
+
+ErrType LogMessage::type() const
+{
+	return errType_;
 }
 
 const std::string& LogMessage::message() const
@@ -11,40 +15,74 @@ const std::string& LogMessage::message() const
 	return message_;
 }
 
-Warning::Warning(const std::string& message) : LogMessage(*this, message)
+Handler::Handler(Handler* handler) : nextHandler(handler)
 {
 }
 
-void Warning::logMessage()
+void Handler::setNextHandler(Handler* handler)
 {
-	std::wcout << utf2wide(message()) << "\n";
+	nextHandler = std::move(handler);
 }
 
-Error::Error(const std::string& filePath) : filePath_(filePath), LogMessage(*this)
+Handler* Handler::getNextHandler()
 {
+	return std::move(nextHandler);
 }
 
-void Error::logMessage()
+Warning::Warning(Handler* nextHandler)
 {
-	std::ofstream fout;
-	fout.open(filePath_, std::ios_base::app);
-	if (fout.is_open()) fout << message() << std::endl;
+	if (nextHandler) setNextHandler(nextHandler);
 }
 
-FatalError::FatalError() : LogMessage(*this)
+void Warning::handleLogMessage(LogMessage logMes)
 {
+	if (logMes.type() == ErrType::WARNING)
+	{
+		std::wcout << ansi2wide(logMes.message()) << "\n";
+	}
+	else getNextHandler()->handleLogMessage(logMes);
 }
 
-void FatalError::logMessage()
+Error::Error(const std::string& filePath, Handler* nextHandler) : filePath_(filePath)
 {
-	throw std::runtime_error(message());
+	if (nextHandler) setNextHandler(nextHandler);
 }
 
-UnknowError::UnknowError() : LogMessage(*this)
+void Error::handleLogMessage(LogMessage logMes)
 {
+	if (logMes.type() == ErrType::ERR)
+	{
+		std::ofstream fout;
+		fout.open(filePath_, std::ios_base::app);
+		if (fout.is_open()) fout << logMes.message() << std::endl;
+	}
+	else getNextHandler()->handleLogMessage(logMes);
 }
 
-void UnknowError::logMessage()
+FatalError::FatalError(Handler* nextHandler)
 {
-	throw std::runtime_error(message());
+	if (nextHandler) setNextHandler(nextHandler);
+}
+
+void FatalError::handleLogMessage(LogMessage logMes)
+{
+	if (logMes.type() == ErrType::FATAL)
+	{
+		throw std::runtime_error(logMes.message());
+	}
+	else getNextHandler()->handleLogMessage(logMes);
+}
+
+UnknowError::UnknowError(Handler* nextHandler)
+{
+	if (nextHandler) setNextHandler(nextHandler);
+}
+
+void UnknowError::handleLogMessage(LogMessage logMes)
+{
+	if (logMes.type() == ErrType::UNKNOW)
+	{
+		throw std::runtime_error(logMes.message());
+	}
+	else getNextHandler()->handleLogMessage(logMes);
 }

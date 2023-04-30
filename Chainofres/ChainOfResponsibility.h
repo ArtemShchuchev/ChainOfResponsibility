@@ -27,11 +27,11 @@ public:
 class Handler
 {
 private:
-    Handler* nextHandler;
+    std::unique_ptr<Handler> nextHandler_;
 public:
-    Handler(Handler* handler = nullptr);
+    Handler(std::unique_ptr<Handler> handler = nullptr);
     virtual void handleLogMessage(LogMessage logMes){}
-    void setNextHandler(Handler* handler);
+    void setNextHandler(std::unique_ptr<Handler> handler);
     Handler* getNextHandler();
 };
 /*
@@ -40,7 +40,7 @@ public:
 class Warning : public Handler
 {
 public:
-    Warning(Handler* nextHandler = nullptr);
+    Warning(std::unique_ptr<Handler> nextHandler = nullptr);
     void handleLogMessage(LogMessage logMes) override;
 };
 
@@ -52,7 +52,7 @@ class Error : public Handler
 private:
     std::string filePath_;
 public:
-    Error(const std::string& filePath, Handler* nextHandler = nullptr);
+    Error(const std::string& filePath, std::unique_ptr<Handler> nextHandler = nullptr);
     void handleLogMessage(LogMessage logMes) override;
 };
 
@@ -64,7 +64,7 @@ public:
 class FatalError : public Handler
 {
 public:
-    FatalError(Handler* nextHandler = nullptr);
+    FatalError(std::unique_ptr<Handler> nextHandler = nullptr);
     void handleLogMessage(LogMessage logMes) override;
 };
 
@@ -75,6 +75,6 @@ public:
 class UnknowError : public Handler
 {
 public:
-    UnknowError(Handler* nextHandler = nullptr);
+    UnknowError(std::unique_ptr<Handler> nextHandler = nullptr);
     void handleLogMessage(LogMessage logMes) override;
 };

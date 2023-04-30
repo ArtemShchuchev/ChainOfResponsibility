@@ -46,7 +46,10 @@ int main(int argc, char** argv)
 {
 	printHeader(L"Задание 3. Паттерн «Цепочка ответственности»");
 
-	auto handler = new Warning(new Error("error.txt", new FatalError(new UnknowError())));
+	auto handler = std::make_unique<Warning>
+		(std::make_unique<Error>
+			("error.txt", std::make_unique<FatalError>
+				(std::make_unique<UnknowError>() )));
 
 	handler->handleLogMessage({ ErrType::WARNING, "Предупреждение!" });
 	handler->handleLogMessage({ ErrType::ERR, "Ошибка!" });

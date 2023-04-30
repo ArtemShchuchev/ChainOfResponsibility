@@ -15,23 +15,23 @@ const std::string& LogMessage::message() const
 	return message_;
 }
 
-Handler::Handler(Handler* handler) : nextHandler(handler)
+Handler::Handler(std::unique_ptr<Handler> handler) : nextHandler_(std::move(handler))
 {
 }
 
-void Handler::setNextHandler(Handler* handler)
+void Handler::setNextHandler(std::unique_ptr<Handler> handler)
 {
-	nextHandler = std::move(handler);
+	nextHandler_ = std::move(handler);
 }
 
 Handler* Handler::getNextHandler()
 {
-	return std::move(nextHandler);
+	return nextHandler_.get();
 }
 
-Warning::Warning(Handler* nextHandler)
+Warning::Warning(std::unique_ptr<Handler> nextHandler)
 {
-	if (nextHandler) setNextHandler(nextHandler);
+	if (nextHandler) setNextHandler(std::move(nextHandler));
 }
 
 void Warning::handleLogMessage(LogMessage logMes)
@@ -43,9 +43,9 @@ void Warning::handleLogMessage(LogMessage logMes)
 	else getNextHandler()->handleLogMessage(logMes);
 }
 
-Error::Error(const std::string& filePath, Handler* nextHandler) : filePath_(filePath)
+Error::Error(const std::string& filePath, std::unique_ptr<Handler> nextHandler) : filePath_(filePath)
 {
-	if (nextHandler) setNextHandler(nextHandler);
+	if (nextHandler) setNextHandler(std::move(nextHandler));
 }
 
 void Error::handleLogMessage(LogMessage logMes)
@@ -59,9 +59,9 @@ void Error::handleLogMessage(LogMessage logMes)
 	else getNextHandler()->handleLogMessage(logMes);
 }
 
-FatalError::FatalError(Handler* nextHandler)
+FatalError::FatalError(std::unique_ptr<Handler> nextHandler)
 {
-	if (nextHandler) setNextHandler(nextHandler);
+	if (nextHandler) setNextHandler(std::move(nextHandler));
 }
 
 void FatalError::handleLogMessage(LogMessage logMes)
@@ -73,9 +73,9 @@ void FatalError::handleLogMessage(LogMessage logMes)
 	else getNextHandler()->handleLogMessage(logMes);
 }
 
-UnknowError::UnknowError(Handler* nextHandler)
+UnknowError::UnknowError(std::unique_ptr<Handler> nextHandler)
 {
-	if (nextHandler) setNextHandler(nextHandler);
+	if (nextHandler) setNextHandler(std::move(nextHandler));
 }
 
 void UnknowError::handleLogMessage(LogMessage logMes)
